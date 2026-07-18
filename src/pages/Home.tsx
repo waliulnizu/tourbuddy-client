@@ -277,7 +277,7 @@ export default function Home() {
       {/* 2. Stats Section - Overlapping style handled with proper margins */}
       {/* FIX: added mb-16 md:mb-20 so there is a deliberate, single gap before
           the next section, instead of relying on the removed global gap. */}
-      <section className="relative z-10 w-full -mt-28 md:-mt-36 mb-16 md:mb-20">
+      <section className="relative z-10 w-full pt-12 md:pt-12 pb-12 md:pb-20 bg-white">
         <Container size="5xl">
         <div className="grid grid-cols-2 md:grid-cols-4 gap-6 items-center">
           {[
@@ -347,7 +347,7 @@ export default function Home() {
         <div
           className={
             postCount > 0
-              ? "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8 w-full max-w-5xl items-stretch mx-auto"
+              ? "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8 w-full max-w-5xl items-stretch mx-auto"
               : "flex justify-center items-center w-full"
           }
         >
