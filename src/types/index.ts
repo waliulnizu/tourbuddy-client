@@ -5,7 +5,7 @@ export interface User {
   phone?: string;
   gender?: string;
   address?: string;
-  role?: 'admin' | 'traveler';
+  role?: 'admin' | 'traveler' | 'guide';
   status?: string;
   profilePicture?: string;
 }
@@ -33,6 +33,8 @@ export interface Post {
   date_to?: string;
   contact?: string;
   gender?: string;
+  members?: number;
+  join_deadline?: number;
   status?: string;
   traveler?: {
     _id?: string;
@@ -77,8 +79,12 @@ export interface BannerText {
 export interface Guide {
   _id: string;
   name: string;
+  email?: string;
   designation?: string;
-  phone?: string;
+  phone: string;
+  address?: string;
+  bio?: string;
+  experience?: string;
   guide_image?: string;
   status?: string;
 }
@@ -106,6 +112,7 @@ export interface HomeData {
   sliders: Slider[];
   bannertext: BannerText | null;
   banners: Banner[];
+  guides?: Guide[];
 }
 
 export interface AdminStats {
@@ -156,11 +163,14 @@ export interface PostFormData {
   place_from: string;
   place_to: string;
   details: string;
+  members: string;
+  join_deadline: string;
 }
 
 export interface BlogFormData {
   title: string;
   details: string;
+  blog_image?: string;
 }
 
 export interface ContactFormData {
@@ -185,6 +195,7 @@ export interface ProfileFormData {
   phone: string;
   gender: string;
   address: string;
+  profilePicture?: string;
 }
 
 export interface PasswordChangeForm {

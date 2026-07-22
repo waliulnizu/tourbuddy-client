@@ -7,6 +7,14 @@ import Breadcrumb from '../components/ui/Breadcrumb';
 import SectionHeader from '../components/ui/SectionHeader';
 import Container from '../components/ui/Container';
 
+interface CountdownTime {
+  days: number;
+  hours: number;
+  minutes: number;
+  seconds: number;
+  expired: boolean;
+}
+
 export default function PostDetail() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
@@ -16,11 +24,15 @@ export default function PostDetail() {
   const [relatedPosts, setRelatedPosts] = useState<Post[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [reviewName, setReviewName] = useState('');
+  const [reviewName, setReviewName] = useState(() => {
+    const u = localStorage.getItem('user');
+    return u ? (JSON.parse(u).name || '') : '';
+  });
   const [reviewRating, setReviewRating] = useState(5);
   const [reviewText, setReviewText] = useState('');
   const [reviews, setReviews] = useState<{ name: string; rating: number; text: string; date: string }[]>([]);
   const [actionLoading, setActionLoading] = useState(false);
+  const [countdown, setCountdown] = useState<CountdownTime>({ days: 0, hours: 0, minutes: 0, seconds: 0, expired: true });
 
   const getUser = () => {
     const u = localStorage.getItem('user');
@@ -58,9 +70,64 @@ export default function PostDetail() {
 
   useEffect(() => { fetchPost(); }, [fetchPost]);
 
+  // Countdown timer
+  useEffect(() => {
+    if (!post?.date_from) {
+      setCountdown({ days: 0, hours: 0, minutes: 0, seconds: 0, expired: true });
+      return;
+    }
+
+    const calculateCountdown = (): CountdownTime => {
+      const startDate = new Date(post.date_from!);
+      const now = new Date();
+
+      // If join_deadline set, deadline = start - deadline hours. Otherwise deadline = start date.
+      const deadline = post.join_deadline
+        ? new Date(startDate.getTime() - post.join_deadline * 60 * 60 * 1000)
+        : startDate;
+
+      const diff = deadline.getTime() - now.getTime();
+
+      if (diff <= 0) {
+        return { days: 0, hours: 0, minutes: 0, seconds: 0, expired: true };
+      }
+
+      return {
+        days: Math.floor(diff / (1000 * 60 * 60 * 24)),
+        hours: Math.floor((diff / (1000 * 60 * 60)) % 24),
+        minutes: Math.floor((diff / (1000 * 60)) % 60),
+        seconds: Math.floor((diff / 1000) % 60),
+        expired: false,
+      };
+    };
+
+    setCountdown(calculateCountdown());
+    const timer = setInterval(() => setCountdown(calculateCountdown()), 1000);
+    return () => clearInterval(timer);
+  }, [post?.join_deadline, post?.date_from]);
+
   const handleJoinRequest = async () => {
     const user = getUser();
     if (!user) { navigate('/login'); return; }
+
+    // Tour already started
+    if (tourStarted) {
+      alert('This tour has already started.');
+      return;
+    }
+
+    // Gender check
+    if (post?.gender && post.gender !== 'any' && user.gender && user.gender !== post.gender) {
+      alert(`This tour is only for ${post.gender} members.`);
+      return;
+    }
+
+    // Join deadline check
+    if (joinExpired) {
+      alert('Join deadline has expired. You can message the tour owner.');
+      return;
+    }
+
     setActionLoading(true);
     try {
       await axios.post(`${import.meta.env.VITE_API_URL}/api/traveler/connect/${id}`, {}, getHeaders());
@@ -95,6 +162,31 @@ export default function PostDetail() {
       navigate(`/traveler/chat/${String(post.traveler._id)}/${id}`);
     }
   };
+
+  // Join deadline check
+  const isJoinExpired = (): boolean => {
+    if (!post?.join_deadline || !post?.date_from) return false;
+    const startDate = new Date(post.date_from);
+    const deadline = new Date(startDate.getTime() - post.join_deadline * 60 * 60 * 1000);
+    return new Date() > deadline;
+  };
+
+  const getJoinDeadlineDate = (): string => {
+    if (!post?.join_deadline || !post?.date_from) return '';
+    const startDate = new Date(post.date_from);
+    const deadline = new Date(startDate.getTime() - post.join_deadline * 60 * 60 * 1000);
+    return deadline.toLocaleString();
+  };
+
+  const joinExpired = isJoinExpired();
+
+  // Tour already started check
+  const isTourStarted = (): boolean => {
+    if (!post?.date_from) return false;
+    return new Date() > new Date(post.date_from);
+  };
+
+  const tourStarted = isTourStarted();
 
   const handleDeletePost = async () => {
     if (!window.confirm('Are you sure you want to delete this tour?')) return;
@@ -188,7 +280,21 @@ export default function PostDetail() {
               {post.gender && (
                 <div>
                   <p className="text-xs text-gray-500 uppercase font-semibold tracking-wider">Gender</p>
-                  <p className="text-gray-900 font-medium mt-1 capitalize">{post.gender}</p>
+                  <p className={`font-medium mt-1 capitalize ${
+                    post.gender === 'male' ? 'text-blue-700' :
+                    post.gender === 'female' ? 'text-pink-700' :
+                    'text-emerald-700'
+                  }`}>
+                    {post.gender === 'male' ? 'Male Only - Female are not allowed' :
+                     post.gender === 'female' ? 'Female Only - Male are not allowed' :
+                     'Both Gender Allowed'}
+                  </p>
+                </div>
+              )}
+              {post.join_deadline && (
+                <div>
+                  <p className="text-xs text-gray-500 uppercase font-semibold tracking-wider">Join Before</p>
+                  <p className="text-gray-900 font-medium mt-1">{post.join_deadline} hours before start</p>
                 </div>
               )}
               <div>
@@ -203,6 +309,35 @@ export default function PostDetail() {
                 <p className="text-gray-900 font-medium mt-1">{post.traveler?.name || 'Unknown'}</p>
               </div>
             </div>
+
+            {/* Join Countdown Timer */}
+            {post.date_from && !tourStarted && (
+              <div className={`mb-8 p-6 rounded-xl border ${countdown.expired ? 'bg-red-50 border-red-200' : 'bg-gradient-to-r from-blue-50 to-indigo-50 border-blue-200'}`}>
+                <p className={`text-sm font-semibold mb-3 ${countdown.expired ? 'text-red-600' : 'text-blue-700'}`}>
+                  {countdown.expired 
+                    ? (post.join_deadline ? 'Join deadline has expired' : 'Tour is starting soon')
+                    : (post.join_deadline ? 'Time remaining to join this tour' : 'Time remaining until tour starts')
+                  }
+                </p>
+                {!countdown.expired && (
+                  <div className="flex items-center gap-3">
+                    {[
+                      { value: countdown.days, label: 'Days' },
+                      { value: countdown.hours, label: 'Hours' },
+                      { value: countdown.minutes, label: 'Min' },
+                      { value: countdown.seconds, label: 'Sec' },
+                    ].map((item) => (
+                      <div key={item.label} className="flex flex-col items-center">
+                        <div className="w-16 h-16 bg-white rounded-xl shadow-sm border border-blue-100 flex items-center justify-center">
+                          <span className="text-2xl font-extrabold text-blue-700 tabular-nums">{String(item.value).padStart(2, '0')}</span>
+                        </div>
+                        <span className="text-xs text-blue-600 font-semibold mt-1.5">{item.label}</span>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
 
             <div className="prose prose-lg max-w-none text-gray-700 leading-relaxed whitespace-pre-line mb-8">
               {post.details}
@@ -245,6 +380,15 @@ export default function PostDetail() {
 
               if (user?.role === 'admin') return null;
 
+              // Tour already started - no join/message option
+              if (tourStarted) {
+                return (
+                  <div className="flex flex-wrap items-center gap-3 mb-8 p-5 bg-gray-50 rounded-xl border border-gray-100">
+                    <p className="text-sm text-gray-500 font-semibold">This tour has already started.</p>
+                  </div>
+                );
+              }
+
               if (!user) {
                 return (
                   <div className="flex flex-wrap items-center gap-3 mb-8 p-5 bg-gray-50 rounded-xl border border-gray-100">
@@ -260,16 +404,27 @@ export default function PostDetail() {
               }
 
               const statusInfo = connectStatusLabel();
+
+              // Gender check: join button disable korar jonno
+              const genderMismatch = post.gender && post.gender !== 'any' && user?.gender && user.gender !== post.gender;
+
+              // Join expired check
+              const joinDeadlineExpired = joinExpired && !myConnect;
+
               return (
                 <div className="flex flex-wrap items-center gap-3 mb-8 p-5 bg-gray-50 rounded-xl border border-gray-100">
                   {!myConnect ? (
                     <button
                       onClick={handleJoinRequest}
-                      disabled={actionLoading}
-                      className="inline-flex items-center gap-2 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white px-6 py-3 rounded-xl text-sm font-bold transition-all shadow-sm shadow-blue-500/25 hover:shadow-blue-500/40"
+                      disabled={actionLoading || !!genderMismatch || joinDeadlineExpired}
+                      className={`inline-flex items-center gap-2 px-6 py-3 rounded-xl text-sm font-bold transition-all shadow-sm ${
+                        genderMismatch || joinDeadlineExpired
+                          ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                          : 'bg-blue-600 hover:bg-blue-700 text-white shadow-blue-500/25 hover:shadow-blue-500/40'
+                      }`}
                     >
                       <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" /></svg>
-                      Request to Join
+                      {joinDeadlineExpired ? 'Join Expired' : genderMismatch ? 'Not Available' : 'Request to Join'}
                     </button>
                   ) : myConnect.status === 'pending' ? (
                     <button
@@ -294,6 +449,18 @@ export default function PostDetail() {
                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" /></svg>
                     Message Host
                   </button>
+
+                  {genderMismatch && (
+                    <p className="w-full text-sm text-red-600 font-semibold mt-1">
+                      This tour is only for {post.gender} members. You cannot join.
+                    </p>
+                  )}
+
+                  {joinDeadlineExpired && (
+                    <p className="w-full text-sm text-red-600 font-semibold mt-1">
+                      Join deadline expired on {getJoinDeadlineDate()}. You can message the tour owner.
+                    </p>
+                  )}
                 </div>
               );
             })()}
@@ -323,8 +490,8 @@ export default function PostDetail() {
 
               <form onSubmit={handleReviewSubmit} className="bg-gray-50 rounded-xl p-6 mb-8">
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
-                  <input type="text" value={reviewName} onChange={(e) => setReviewName(e.target.value)} placeholder="Your name" required
-                    className="px-4 py-2.5 bg-white border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent" />
+                  <input type="text" value={reviewName} onChange={(e) => setReviewName(e.target.value)} placeholder="Your name" required readOnly
+                    className="px-4 py-2.5 bg-gray-100 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent cursor-not-allowed" />
                   <div className="flex items-center gap-2">
                     <span className="text-sm font-medium text-gray-700">Rating:</span>
                     {[1,2,3,4,5].map(star => (

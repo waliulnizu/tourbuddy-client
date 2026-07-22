@@ -1,25 +1,24 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import axios from 'axios';
-import type { AboutData, Guide } from '../types';
+import type { AboutData } from '../types';
 import LoadingSpinner from '../components/ui/LoadingSpinner';
 import SectionHeader from '../components/ui/SectionHeader';
 import Container from '../components/ui/Container';
 
 interface AboutPageData {
   about: AboutData | null;
-  guides: Guide[];
 }
 
 export default function About() {
-  const [data, setData] = useState<AboutPageData>({ about: null, guides: [] });
+  const [data, setData] = useState<AboutPageData>({ about: null });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const response = await axios.get<{ about: AboutData; guides: Guide[] }>(`${import.meta.env.VITE_API_URL}/api/public/about`);
+        const response = await axios.get<{ about: AboutData }>(`${import.meta.env.VITE_API_URL}/api/public/about`);
         setData(response.data);
         setLoading(false);
       } catch {
@@ -56,7 +55,7 @@ export default function About() {
             About Us
           </span>
           <h1 className="text-4xl md:text-6xl font-extrabold text-white mb-4 tracking-tight">{data.about?.title || 'About TourBuddy'}</h1>
-          <p className="text-xl text-slate-200 max-w-2xl leading-relaxed">Learn about our mission and meet our team of expert guides</p>
+          <p className="text-xl text-slate-200 max-w-2xl leading-relaxed">Learn about our mission and what drives us</p>
           </Container>
         </div>
       </section>
@@ -98,33 +97,6 @@ export default function About() {
           </div>
         </Container>
       </section>
-
-      <Container className="py-20 md:py-28">
-        <SectionHeader badge="Our Team" title="Meet Our Guides" subtitle="Passionate experts who make every journey extraordinary" align="center" />
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8 -mt-4">
-          {data.guides && data.guides.length > 0 ? (
-            data.guides.map((guide) => (
-              <div key={guide._id} className="group card card-hover overflow-hidden">
-                <div className="h-64 overflow-hidden">
-                  <img src={guide.guide_image || defaultImage} alt={guide.name} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" />
-                </div>
-                <div className="p-6 text-center">
-                  <h3 className="text-xl font-bold text-slate-900">{guide.name}</h3>
-                  <p className="text-blue-600 font-medium mt-1">{guide.designation || 'Tour Guide'}</p>
-                  <div className="flex items-center justify-center gap-2 mt-4 text-slate-400 text-sm">
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" /></svg>
-                    <span>{guide.phone}</span>
-                  </div>
-                </div>
-              </div>
-            ))
-          ) : (
-            <div className="col-span-full text-center py-16">
-              <p className="text-slate-500 text-lg">No guides available at the moment.</p>
-            </div>
-          )}
-        </div>
-      </Container>
 
       <section className="relative py-20 md:py-24 overflow-hidden bg-gradient-to-br from-blue-600 via-blue-700 to-teal-600">
         <div className="absolute top-0 left-0 w-96 h-96 bg-white/5 rounded-full blur-3xl -translate-x-1/2 -translate-y-1/2" />

@@ -1,26 +1,13 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import axios from 'axios';
-import type { ContactData, ContactFormData } from '../types';
+import type { ContactFormData } from '../types';
 import PageHero from '../components/ui/PageHero';
 import Container from '../components/ui/Container';
 
 export default function Contact() {
-  const [contact, setContact] = useState<ContactData | null>(null);
-  const [loading, setLoading] = useState(true);
   const [form, setForm] = useState<ContactFormData>({ name: '', email: '', message: '' });
   const [sending, setSending] = useState(false);
   const [success, setSuccess] = useState<string | null>(null);
-
-  useEffect(() => {
-    const fetchContact = async () => {
-      try {
-        const res = await axios.get<{ contact: ContactData }>(`${import.meta.env.VITE_API_URL}/api/public/contact`);
-        setContact(res.data.contact);
-        setLoading(false);
-      } catch { setLoading(false); }
-    };
-    fetchContact();
-  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -36,77 +23,115 @@ export default function Contact() {
     setSending(false);
   };
 
-  const contactItems = contact ? [
-    { label: 'Email', value: contact.email, color: 'bg-blue-50 text-blue-600', icon: 'M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z' },
-    { label: 'Phone', value: `${contact.phone}${contact.phone_2 ? ` / ${contact.phone_2}` : ''}`, color: 'bg-teal-50 text-teal-600', icon: 'M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z' },
-    { label: 'Address', value: `${contact.address}, ${contact.city}`, color: 'bg-purple-50 text-purple-600', icon: 'M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z M15 11a3 3 0 11-6 0 3 3 0 016 0z' },
-    { label: 'Telephone', value: contact.telephone, color: 'bg-orange-50 text-orange-600', icon: 'M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z' },
-  ].filter(item => item.value) : [];
-
   return (
-    <div className="bg-slate-50 min-h-screen pb-16">
+    <div className="bg-slate-50 min-h-screen pb-20">
       <PageHero badge="Get in Touch" title="Contact Us" subtitle="We'd love to hear from you. Reach out anytime." />
 
-      <Container className="-mt-10 relative z-10 pb-16">
-        {success && (
-          <div className={`mb-6 p-4 rounded-xl border ${success.includes('success') ? 'bg-emerald-50 border-emerald-200 text-emerald-700' : 'bg-red-50 border-red-200 text-red-700'}`}>
-            <div className="flex items-center gap-2 font-medium">
-              <span className={`w-2 h-2 rounded-full ${success.includes('success') ? 'bg-emerald-500' : 'bg-red-500'}`} />
-              {success}
-            </div>
-          </div>
-        )}
-
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-          <div className="card-elevated p-8 md:p-10">
-            <h2 className="text-2xl font-bold text-slate-900 mb-8">Contact Information</h2>
-            {loading ? (
-              <div className="animate-pulse space-y-4">
-                {[1, 2, 3].map(i => <div key={i} className="h-16 bg-slate-100 rounded-xl" />)}
+      <Container className="-mt-10 relative z-10">
+        <div className="max-w-2xl mx-auto">
+          <div className="bg-white rounded-3xl shadow-xl border border-gray-100 overflow-hidden">
+            {/* Header */}
+            <div className="bg-gradient-to-r from-teal-600 to-emerald-600 px-8 py-10 text-center">
+              <div className="w-16 h-16 bg-white/20 backdrop-blur-sm rounded-2xl flex items-center justify-center mx-auto mb-4">
+                <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                </svg>
               </div>
-            ) : contactItems.length > 0 ? (
-              <div className="space-y-6">
-                {contactItems.map((item) => (
-                  <div key={item.label} className="flex items-start gap-4">
-                    <div className={`w-11 h-11 rounded-xl ${item.color} flex items-center justify-center flex-shrink-0`}>
-                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d={item.icon} /></svg>
-                    </div>
-                    <div>
-                      <p className="font-semibold text-slate-900 text-sm">{item.label}</p>
-                      <p className="text-slate-600 mt-0.5">{item.value}</p>
+              <h2 className="text-2xl font-bold text-white mb-2">Send us a Message</h2>
+              <p className="text-teal-100 text-sm">Fill out the form below and we'll get back to you soon</p>
+            </div>
+
+            {/* Form */}
+            <div className="px-8 py-10">
+              {success && (
+                <div className={`mb-6 p-4 rounded-xl border ${success.includes('success') ? 'bg-emerald-50 border-emerald-200 text-emerald-700' : 'bg-red-50 border-red-200 text-red-700'}`}>
+                  <div className="flex items-center gap-2 font-medium text-sm">
+                    <span className={`w-2 h-2 rounded-full ${success.includes('success') ? 'bg-emerald-500' : 'bg-red-500'}`} />
+                    {success}
+                  </div>
+                </div>
+              )}
+
+              <form onSubmit={handleSubmit} className="space-y-5">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+                  <div>
+                    <label className="text-sm font-semibold text-gray-700 block mb-2">Your Name</label>
+                    <div className="relative">
+                      <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
+                        <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                        </svg>
+                      </div>
+                      <input
+                        type="text"
+                        value={form.name}
+                        onChange={(e) => setForm({ ...form, name: e.target.value })}
+                        required
+                        className="w-full pl-11 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-teal-500 focus:border-transparent focus:bg-white transition-all"
+                        placeholder="John Doe"
+                      />
                     </div>
                   </div>
-                ))}
-              </div>
-            ) : (
-              <p className="text-slate-500">Contact information coming soon.</p>
-            )}
-          </div>
+                  <div>
+                    <label className="text-sm font-semibold text-gray-700 block mb-2">Your Email</label>
+                    <div className="relative">
+                      <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
+                        <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                        </svg>
+                      </div>
+                      <input
+                        type="email"
+                        value={form.email}
+                        onChange={(e) => setForm({ ...form, email: e.target.value })}
+                        required
+                        className="w-full pl-11 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-teal-500 focus:border-transparent focus:bg-white transition-all"
+                        placeholder="you@example.com"
+                      />
+                    </div>
+                  </div>
+                </div>
 
-          <div className="card-elevated p-8 md:p-10">
-            <h2 className="text-2xl font-bold text-slate-900 mb-8">Send a Message</h2>
-            <form onSubmit={handleSubmit} className="space-y-5">
-              <div>
-                <label className="text-sm font-semibold text-slate-700 block mb-2">Your Name</label>
-                <input type="text" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} required className="input-field" placeholder="John Doe" />
-              </div>
-              <div>
-                <label className="text-sm font-semibold text-slate-700 block mb-2">Your Email</label>
-                <input type="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} required className="input-field" placeholder="you@example.com" />
-              </div>
-              <div>
-                <label className="text-sm font-semibold text-slate-700 block mb-2">Message</label>
-                <textarea rows={4} value={form.message} onChange={(e) => setForm({ ...form, message: e.target.value })} required className="input-field resize-none" placeholder="Your message..." />
-              </div>
-              <button type="submit" disabled={sending} className="btn-primary w-full py-3.5 disabled:opacity-60 disabled:cursor-not-allowed">
-                {sending ? (
-                  <span className="flex items-center justify-center gap-2">
-                    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                    Sending...
-                  </span>
-                ) : 'Send Message'}
-              </button>
-            </form>
+                <div>
+                  <label className="text-sm font-semibold text-gray-700 block mb-2">Message</label>
+                  <div className="relative">
+                    <div className="absolute top-3.5 left-0 pl-3.5 flex items-start pointer-events-none">
+                      <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+                      </svg>
+                    </div>
+                    <textarea
+                      rows={5}
+                      value={form.message}
+                      onChange={(e) => setForm({ ...form, message: e.target.value })}
+                      required
+                      className="w-full pl-11 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-teal-500 focus:border-transparent focus:bg-white transition-all resize-none"
+                      placeholder="Write your message here..."
+                    />
+                  </div>
+                </div>
+
+                <button
+                  type="submit"
+                  disabled={sending}
+                  className="w-full bg-gradient-to-r from-teal-600 to-emerald-600 hover:from-teal-700 hover:to-emerald-700 text-white py-3.5 rounded-xl text-sm font-bold transition-all shadow-lg shadow-teal-500/25 hover:shadow-teal-500/40 disabled:opacity-60 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                >
+                  {sending ? (
+                    <>
+                      <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                      Sending...
+                    </>
+                  ) : (
+                    <>
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
+                      </svg>
+                      Send Message
+                    </>
+                  )}
+                </button>
+              </form>
+            </div>
           </div>
         </div>
       </Container>

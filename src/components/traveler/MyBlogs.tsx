@@ -8,7 +8,9 @@ function MyBlogs() {
   const [showForm, setShowForm] = useState(false);
   const [editing, setEditing] = useState<string | null>(null);
   const [form, setForm] = useState<BlogFormData>({ title: '', details: '' });
+  const [file, setFile] = useState<File | null>(null);
   const [loading, setLoading] = useState(true);
+  const [isUploading, setIsUploading] = useState(false);
 
   const fetchBlogs = async () => {
     try {
@@ -25,28 +27,63 @@ function MyBlogs() {
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => setForm({ ...form, [e.target.name]: e.target.value });
 
-  const resetForm = () => { setForm({ title: '', details: '' }); setEditing(null); setShowForm(false); };
+  const resetForm = () => { setForm({ title: '', details: '' }); setFile(null); setEditing(null); setShowForm(false); };
+
+  const uploadToImgBB = async (imageFile: File): Promise<string | null> => {
+    const apiKey = import.meta.env.VITE_IMGBB_API_KEY;
+    if (!apiKey) {
+      console.error("ImgBB API Key missing");
+      return null;
+    }
+    const formData = new FormData();
+    formData.append('image', imageFile);
+    try {
+      const response = await axios.post(`https://api.imgbb.com/1/upload?key=${apiKey}`, formData);
+      return response.data.data.url;
+    } catch (error) {
+      console.error("ImgBB Upload Failed:", error);
+      return null;
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setIsUploading(true);
     try {
       const token = localStorage.getItem('token');
+      const payload: Record<string, any> = {};
+      if (form.title) payload.title = form.title;
+      if (form.details) payload.details = form.details;
+
+      if (file) {
+        const imageUrl = await uploadToImgBB(file);
+        if (imageUrl) {
+          payload.blog_image = imageUrl;
+        } else {
+          alert("Image upload failed!");
+          setIsUploading(false);
+          return;
+        }
+      }
+
+      const config = {
+        headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' }
+      };
+
       if (editing) {
-        await axios.put(`${import.meta.env.VITE_API_URL}/api/traveler/blogs/${editing}`, form, {
-          headers: { Authorization: `Bearer ${token}` }
-        });
+        await axios.put(`${import.meta.env.VITE_API_URL}/api/traveler/blogs/${editing}`, payload, config);
       } else {
-        await axios.post(`${import.meta.env.VITE_API_URL}/api/traveler/blogs`, form, {
-          headers: { Authorization: `Bearer ${token}` }
-        });
+        await axios.post(`${import.meta.env.VITE_API_URL}/api/traveler/blogs`, payload, config);
       }
       resetForm();
       fetchBlogs();
     } catch (err: unknown) { console.error('Failed to save blog'); }
+    finally { setIsUploading(false); }
   };
 
   const handleEdit = (blog: Blog) => {
     setForm({ title: blog.title || '', details: blog.details || '' });
+    setFile(null);
     setEditing(blog._id);
     setShowForm(true);
   };
@@ -87,12 +124,20 @@ function MyBlogs() {
                 className="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-teal-500 focus:border-transparent transition-all" placeholder="Blog title" />
             </div>
             <div>
+              <label className="block text-sm font-semibold text-gray-700 mb-1.5">Blog Image (Optional)</label>
+              <label className="flex items-center justify-center gap-2 px-4 py-6 border-2 border-dashed border-gray-200 rounded-xl hover:border-teal-400 hover:bg-teal-50/50 transition-all cursor-pointer">
+                <input type="file" accept="image/*" className="hidden" onChange={(e: React.ChangeEvent<HTMLInputElement>) => setFile(e.target.files?.[0] || null)} />
+                <svg className="w-6 h-6 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
+                <span className="text-sm text-gray-500">{file ? file.name : 'Click to upload blog image'}</span>
+              </label>
+            </div>
+            <div>
               <label className="block text-sm font-semibold text-gray-700 mb-1.5">Content</label>
               <textarea name="details" value={form.details} onChange={handleChange} rows={6} required
                 className="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-teal-500 focus:border-transparent transition-all resize-none" placeholder="Write your story..."></textarea>
             </div>
-            <button type="submit" className="bg-teal-600 hover:bg-teal-700 text-white px-6 py-2.5 rounded-xl text-sm font-semibold transition-all shadow-sm hover:shadow-md">
-              {editing ? 'Update Blog' : 'Create Blog'}
+            <button type="submit" disabled={isUploading} className="bg-teal-600 hover:bg-teal-700 text-white px-6 py-2.5 rounded-xl text-sm font-semibold transition-all shadow-sm hover:shadow-md disabled:bg-teal-400">
+              {isUploading ? 'Uploading Image...' : editing ? 'Update Blog' : 'Create Blog'}
             </button>
           </form>
         </div>
@@ -103,23 +148,30 @@ function MyBlogs() {
       ) : (
         <div className="space-y-4">
           {blogs.length > 0 ? blogs.map((blog) => (
-            <div key={blog._id} className="bg-white rounded-2xl border border-gray-100 p-6 shadow-sm hover:shadow-md transition-shadow">
-              <div className="flex justify-between items-start gap-4">
-                <div className="flex-1 min-w-0">
-                  <h3 className="text-lg font-bold text-gray-900">{blog.title}</h3>
-                  <p className="text-sm text-gray-500 mt-1">
-                    {new Date(blog.createdAt).toLocaleDateString()}
-                    <span className="mx-2 text-gray-300">|</span>
-                    <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold ${blog.status === 'active' ? 'bg-emerald-50 text-emerald-700' : 'bg-amber-50 text-amber-700'}`}>
-                      <span className={`w-1 h-1 rounded-full ${blog.status === 'active' ? 'bg-emerald-500' : 'bg-amber-500'}`}></span>
-                      {blog.status}
-                    </span>
-                  </p>
-                  <p className="text-gray-600 mt-3 line-clamp-2 text-sm leading-relaxed">{blog.details}</p>
+            <div key={blog._id} className="bg-white rounded-2xl border border-gray-100 shadow-sm hover:shadow-md transition-shadow overflow-hidden">
+              {blog.blog_image && (
+                <div className="h-48 overflow-hidden">
+                  <img src={blog.blog_image} alt={blog.title} className="w-full h-full object-cover" />
                 </div>
-                <div className="flex gap-2 flex-shrink-0">
-                  <button onClick={() => handleEdit(blog)} className="px-3 py-1.5 text-xs font-semibold text-blue-600 bg-blue-50 hover:bg-blue-100 rounded-lg transition-colors">Edit</button>
-                  <button onClick={() => handleDelete(blog._id)} className="px-3 py-1.5 text-xs font-semibold text-red-600 bg-red-50 hover:bg-red-100 rounded-lg transition-colors">Delete</button>
+              )}
+              <div className="p-6">
+                <div className="flex justify-between items-start gap-4">
+                  <div className="flex-1 min-w-0">
+                    <h3 className="text-lg font-bold text-gray-900">{blog.title}</h3>
+                    <p className="text-sm text-gray-500 mt-1">
+                      {new Date(blog.createdAt).toLocaleDateString()}
+                      <span className="mx-2 text-gray-300">|</span>
+                      <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold ${blog.status === 'active' ? 'bg-emerald-50 text-emerald-700' : 'bg-amber-50 text-amber-700'}`}>
+                        <span className={`w-1 h-1 rounded-full ${blog.status === 'active' ? 'bg-emerald-500' : 'bg-amber-500'}`}></span>
+                        {blog.status}
+                      </span>
+                    </p>
+                    <p className="text-gray-600 mt-3 line-clamp-2 text-sm leading-relaxed">{blog.details}</p>
+                  </div>
+                  <div className="flex gap-2 flex-shrink-0">
+                    <button onClick={() => handleEdit(blog)} className="px-3 py-1.5 text-xs font-semibold text-blue-600 bg-blue-50 hover:bg-blue-100 rounded-lg transition-colors">Edit</button>
+                    <button onClick={() => handleDelete(blog._id)} className="px-3 py-1.5 text-xs font-semibold text-red-600 bg-red-50 hover:bg-red-100 rounded-lg transition-colors">Delete</button>
+                  </div>
                 </div>
               </div>
             </div>

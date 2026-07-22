@@ -7,7 +7,7 @@ import FilterBar from '../components/ui/FilterBar';
 import EmptyState from '../components/ui/EmptyState';
 import Container from '../components/ui/Container';
 
-const ITEMS_PER_PAGE = 9;
+const ITEMS_PER_PAGE = 6;
 
 function BlogSkeleton() {
   return (

@@ -9,6 +9,7 @@ import BlogDetail from './pages/BlogDetail';
 import Posts from './pages/Posts';
 import PostDetail from './pages/PostDetail';
 import Contact from './pages/Contact';
+import Guides from './pages/Guides';
 import Travelers from './pages/Travelers';
 import TravelerDetail from './pages/TravelerDetail';
 import TravelerDashboard from './pages/TravelerDashboard';
@@ -41,6 +42,7 @@ function App() {
           <Route path="/posts" element={<Posts />} />
           <Route path="/post/:id" element={<PostDetail />} />
           <Route path="/contact" element={<Contact />} />
+          <Route path="/guides" element={<Guides />} />
           <Route path="/travelers" element={<Travelers />} />
           <Route path="/traveler/:id" element={<TravelerDetail />} />
           <Route path="/login" element={<Login />} />

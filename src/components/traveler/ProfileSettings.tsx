@@ -9,21 +9,35 @@ function ProfileSettings() {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [message, setMessage] = useState<Message | null>(null);
+  const [profileFile, setProfileFile] = useState<File | null>(null);
+  const [preview, setPreview] = useState<string | null>(null);
 
   useEffect(() => {
     const user: User = JSON.parse(localStorage.getItem('user') || '{}');
     setForm({ name: user.name || '', phone: user.phone || '', gender: user.gender || '', address: user.address || '' });
+    if (user.profilePicture) setPreview(`${import.meta.env.VITE_API_URL}/${user.profilePicture}`);
   }, []);
 
   const handleProfileUpdate = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
       const token = localStorage.getItem('token');
-      await axios.put(`${import.meta.env.VITE_API_URL}/api/traveler/profile`, form, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      const user: User = JSON.parse(localStorage.getItem('user') || '{}');
-      localStorage.setItem('user', JSON.stringify({ ...user, ...form }));
+      const formData = new FormData();
+      formData.append('name', form.name);
+      formData.append('phone', form.phone);
+      formData.append('gender', form.gender);
+      formData.append('address', form.address);
+      if (profileFile) formData.append('profilePicture', profileFile);
+
+      const res = await axios.put<{ message: string; traveler: User }>(
+        `${import.meta.env.VITE_API_URL}/api/traveler/profile`,
+        formData,
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      const traveler = res.data.traveler;
+      localStorage.setItem('user', JSON.stringify(traveler));
+      if (traveler.profilePicture) setPreview(`${import.meta.env.VITE_API_URL}/${traveler.profilePicture}`);
+      setProfileFile(null);
       setMessage({ type: 'success', text: 'Profile updated successfully!' });
     } catch (err: unknown) {
       setMessage({ type: 'error', text: 'Failed to update profile.' });
@@ -48,6 +62,14 @@ function ProfileSettings() {
     }
   };
 
+  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setProfileFile(file);
+      setPreview(URL.createObjectURL(file));
+    }
+  };
+
   return (
     <div className="space-y-6">
       <div>
@@ -69,6 +91,26 @@ function ProfileSettings() {
       <div className="bg-white rounded-2xl border border-gray-100 p-6 shadow-sm">
         <h3 className="text-lg font-bold text-gray-900 mb-5">Edit Profile</h3>
         <form onSubmit={handleProfileUpdate} className="space-y-4 max-w-lg">
+          <div className="flex items-center gap-5 mb-4">
+            <label className="relative cursor-pointer group">
+              <div className="w-20 h-20 rounded-full overflow-hidden bg-gradient-to-br from-blue-100 to-indigo-100 border-2 border-gray-200 group-hover:border-blue-400 transition-all flex items-center justify-center">
+                {preview ? (
+                  <img src={preview} alt="" className="w-full h-full object-cover" />
+                ) : (
+                  <svg className="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" /></svg>
+                )}
+                <div className="absolute inset-0 bg-black/40 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                  <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
+                </div>
+              </div>
+              <input type="file" accept="image/*" className="hidden" onChange={handleFileSelect} />
+            </label>
+            <div>
+              <p className="text-sm font-semibold text-gray-900">Profile Photo</p>
+              <p className="text-xs text-gray-400 mt-0.5">Click to upload or change</p>
+            </div>
+          </div>
+
           <div>
             <label className="block text-sm font-semibold text-gray-700 mb-1.5">Name</label>
             <input value={form.name} onChange={(e: React.ChangeEvent<HTMLInputElement>) => setForm({ ...form, name: e.target.value })}

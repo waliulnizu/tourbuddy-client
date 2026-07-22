@@ -431,6 +431,49 @@ export default function Home() {
         </Container>
       </section>
 
+      {/* 3.5. Expert Guides Section */}
+      {(data.guides && data.guides.length > 0) && (
+        <section className="relative w-full py-16 md:py-20 bg-gray-50">
+          <Container className="flex flex-col items-center">
+            <SectionHeader badge="Our Guides" title="Meet Our Expert Guides" linkTo="/guides" linkLabel="View all guides" />
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 w-full max-w-6xl mx-auto">
+              {data.guides.map((guide, i) => (
+                <div key={guide._id} className="group relative bg-white rounded-2xl shadow-sm hover:shadow-xl transition-all duration-500 overflow-hidden border border-slate-100 hover:border-blue-100" style={{ animationDelay: `${i * 100}ms` }}>
+                  <div className="relative h-72 overflow-hidden bg-gradient-to-br from-blue-100 to-indigo-100">
+                    <img
+                      src={guide.guide_image && guide.guide_image.startsWith('http') ? guide.guide_image : (guide.guide_image ? `${API_BASE_URL}/${guide.guide_image}` : 'https://images.unsplash.com/photo-1488085061387-422e29b40080?auto=format&fit=crop&w=1200&q=80')}
+                      alt={guide.name}
+                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700 ease-out"
+                      onError={(e) => { e.currentTarget.style.display = 'none'; }}
+                    />
+                    {!guide.guide_image && (
+                      <div className="absolute inset-0 flex items-center justify-center">
+                        <div className="w-24 h-24 rounded-full bg-white/80 backdrop-blur-sm flex items-center justify-center shadow-lg">
+                          <span className="text-3xl font-bold text-blue-600">
+                            {guide.name.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase()}
+                          </span>
+                        </div>
+                      </div>
+                    )}
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
+                    <div className="absolute bottom-0 left-0 right-0 p-5">
+                      <h3 className="text-xl font-bold text-white">{guide.name}</h3>
+                      <div className="flex items-center gap-1.5 mt-1">
+                        <span className="inline-flex items-center gap-1 bg-white/15 backdrop-blur-sm text-white text-xs font-medium px-2.5 py-1 rounded-full border border-white/10">
+                          <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                          {guide.designation || 'Tour Guide'}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </Container>
+        </section>
+      )}
+
       {/* 4. Features Section (Why Choose Us) */}
       {/* FIX: py-28 md:py-40 → py-20 md:py-28. Kept generous, but no longer
           stacking with the removed global gap to create an oversized band. */}

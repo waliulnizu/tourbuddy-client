@@ -9,6 +9,7 @@ import ProfileSettings from '../components/traveler/ProfileSettings';
 import Inbox from '../components/traveler/Inbox';
 import Chat from '../components/traveler/Chat';
 import Notifications from '../components/traveler/Notifications';
+import ApplyAsGuide from '../components/traveler/ApplyAsGuide';
 
 export default function TravelerDashboard() {
   const [traveler, setTraveler] = useState<User | null>(null);
@@ -34,6 +35,7 @@ export default function TravelerDashboard() {
     { name: 'My Blogs', path: '/traveler/blogs', icon: 'blog' },
     { name: 'Inbox', path: '/traveler/inbox', icon: 'message' },
     { name: 'Notifications', path: '/traveler/notifications', icon: 'dashboard' },
+    { name: 'Apply as Guide', path: '/traveler/apply-guide', icon: 'tours' },
     { name: 'Profile Settings', path: '/traveler/profile', icon: 'profile' },
   ];
 
@@ -118,6 +120,7 @@ export default function TravelerDashboard() {
             <Route path="/chat/:otherUserId/:postId" element={<Chat />} />
             <Route path="/notifications" element={<Notifications />} />
             <Route path="/profile" element={<ProfileSettings />} />
+            <Route path="/apply-guide" element={<ApplyAsGuide />} />
           </Routes>
         </main>
       </div>

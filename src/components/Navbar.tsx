@@ -176,6 +176,7 @@ export default function Navbar() {
   const navLinks = [
     { to: '/', label: 'Home' },
     { to: '/posts', label: 'Tours' },
+    { to: '/guides', label: 'Guides' },
     { to: '/blogs', label: 'Blogs' },
     { to: '/about', label: 'About' },
     { to: '/contact', label: 'Contact' },
