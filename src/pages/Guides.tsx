@@ -55,7 +55,7 @@ export default function Guides() {
                 <div key={guide._id} className="group relative bg-white rounded-2xl shadow-sm hover:shadow-xl transition-all duration-500 overflow-hidden border border-slate-100 hover:border-blue-100">
                   <div className="relative h-72 overflow-hidden bg-gradient-to-br from-blue-100 to-indigo-100">
                     <img
-                      src={guide.guide_image ? `${import.meta.env.VITE_API_URL}/${guide.guide_image}` : defaultImage}
+                      src={guide.guide_image ? (guide.guide_image.startsWith('http') ? guide.guide_image : `${import.meta.env.VITE_API_URL}/${guide.guide_image}`) : defaultImage}
                       alt={guide.name}
                       className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700 ease-out"
                       onError={(e) => { e.currentTarget.style.display = 'none'; }}
