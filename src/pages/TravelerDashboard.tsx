@@ -18,9 +18,18 @@ export default function TravelerDashboard() {
   const [mobileOpen, setMobileOpen] = useState(false);
 
   useEffect(() => {
-    const userStr = localStorage.getItem('user');
-    if (!userStr) { navigate('/login'); return; }
-    setTraveler(JSON.parse(userStr) as User);
+    const handle = () => {
+      const userStr = localStorage.getItem('user');
+      if (!userStr) { navigate('/login'); return; }
+      setTraveler(JSON.parse(userStr) as User);
+    };
+    handle();
+    window.addEventListener('storage', handle);
+    window.addEventListener('user_updated', handle);
+    return () => {
+      window.removeEventListener('storage', handle);
+      window.removeEventListener('user_updated', handle);
+    };
   }, [navigate]);
 
   const handleLogout = () => {
@@ -104,9 +113,16 @@ export default function TravelerDashboard() {
                 <Icon name="logout" className="w-4 h-4" />
                 Logout
               </button>
-              <div className="w-9 h-9 rounded-full bg-gradient-to-br from-teal-500 to-emerald-600 flex items-center justify-center text-white text-sm font-bold shadow-md">
-                {traveler?.name?.charAt(0)?.toUpperCase() || 'T'}
-              </div>
+              <Link to="/traveler/profile" className="relative flex-shrink-0 cursor-pointer">
+                {traveler?.profilePicture ? (
+                  <img src={`${import.meta.env.VITE_API_URL}/${traveler.profilePicture}`} alt=""
+                    className="w-9 h-9 rounded-full object-cover shadow-md ring-2 ring-white hover:ring-teal-300 transition-all"
+                    onError={(e) => { e.currentTarget.style.display = 'none'; e.currentTarget.parentElement!.querySelector('.fallback')?.classList.remove('hidden'); }} />
+                ) : null}
+                <div className={`w-9 h-9 rounded-full bg-gradient-to-br from-teal-500 to-emerald-600 flex items-center justify-center text-white text-sm font-bold shadow-md ring-2 ring-white hover:ring-teal-300 transition-all ${traveler?.profilePicture ? 'hidden fallback' : ''}`}>
+                  {traveler?.name?.charAt(0)?.toUpperCase() || 'T'}
+                </div>
+              </Link>
             </div>
           </div>
         </header>

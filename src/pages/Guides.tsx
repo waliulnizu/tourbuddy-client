@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import axios from 'axios';
 import type { Guide } from '../types';
 import LoadingSpinner from '../components/ui/LoadingSpinner';
-import SectionHeader from '../components/ui/SectionHeader';
+
 import Container from '../components/ui/Container';
 
 export default function Guides() {

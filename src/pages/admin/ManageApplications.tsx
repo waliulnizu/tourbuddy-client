@@ -20,12 +20,13 @@ export default function ManageApplications() {
 
   useEffect(() => { fetchData(); }, []);
 
-  const approve = async (id: string) => {
+  const approve = async (id: string, currentStatus?: string) => {
     try {
-      await axios.put(`${API}/applications/${id}/status`, { status: 'approved' }, { headers: headers() });
-      alert('Application approved! The guide has been added.');
+      const payload = currentStatus ? { status: (currentStatus === 'approved' || currentStatus === 'active') ? 'pending' : 'approved' } : { status: 'approved' };
+      await axios.put(`${API}/applications/${id}/status`, payload, { headers: headers() });
+      alert(currentStatus ? 'Application status toggled!' : 'Application approved! The guide has been added.');
     } catch (err: any) {
-      alert(err.response?.data?.error || 'Failed to approve application');
+      alert(err.response?.data?.error || 'Failed to update application');
     }
     fetchData();
   };
@@ -87,15 +88,15 @@ export default function ManageApplications() {
                     </td>
                     <td className="px-6 py-4">
                       <span className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold border ${
-                        a.status === 'approved' ? 'bg-emerald-50 text-emerald-700 border-emerald-200' :
+                        (a.status === 'approved' || a.status === 'active') ? 'bg-emerald-50 text-emerald-700 border-emerald-200' :
                         a.status === 'rejected' ? 'bg-red-50 text-red-700 border-red-200' :
                         'bg-amber-50 text-amber-700 border-amber-200'
                       }`}>
                         <span className={`w-1.5 h-1.5 rounded-full ${
-                          a.status === 'approved' ? 'bg-emerald-500' :
+                          (a.status === 'approved' || a.status === 'active') ? 'bg-emerald-500' :
                           a.status === 'rejected' ? 'bg-red-500' : 'bg-amber-500'
                         }`}></span>
-                        {a.status}
+                        {a.status === 'active' ? 'approved' : a.status}
                       </span>
                     </td>
                     <td className="px-6 py-4 text-right">
@@ -109,7 +110,7 @@ export default function ManageApplications() {
                           </>
                         )}
                         {a.status !== 'pending' && (
-                          <button onClick={() => approve(a._id)}
+                          <button onClick={() => approve(a._id, a.status)}
                             className="px-3 py-1.5 text-xs font-semibold text-amber-600 bg-amber-50 hover:bg-amber-100 rounded-lg transition-colors">Toggle</button>
                         )}
                         <button onClick={() => handleDelete(a._id)}

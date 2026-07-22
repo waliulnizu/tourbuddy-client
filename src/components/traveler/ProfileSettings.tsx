@@ -36,6 +36,7 @@ function ProfileSettings() {
       );
       const traveler = res.data.traveler;
       localStorage.setItem('user', JSON.stringify(traveler));
+      window.dispatchEvent(new Event('user_updated'));
       if (traveler.profilePicture) setPreview(`${import.meta.env.VITE_API_URL}/${traveler.profilePicture}`);
       setProfileFile(null);
       setMessage({ type: 'success', text: 'Profile updated successfully!' });

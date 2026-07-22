@@ -21,14 +21,17 @@ export default function Navbar() {
   const location = useLocation();
 
   useEffect(() => {
-    const u = localStorage.getItem('user');
-    if (u) setUser(JSON.parse(u) as User);
     const handle = () => {
       const u = localStorage.getItem('user');
       setUser(u ? (JSON.parse(u) as User) : null);
     };
+    handle();
     window.addEventListener('storage', handle);
-    return () => window.removeEventListener('storage', handle);
+    window.addEventListener('user_updated', handle);
+    return () => {
+      window.removeEventListener('storage', handle);
+      window.removeEventListener('user_updated', handle);
+    };
   }, [location.pathname]);
 
   useEffect(() => {
@@ -368,9 +371,16 @@ export default function Navbar() {
                   <button onClick={handleLogout} className="text-sm font-semibold text-slate-500 hover:text-red-500 transition-colors mr-1 outline-none">
                     Logout
                   </button>
-                  <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-500 to-teal-500 flex items-center justify-center text-white text-sm font-bold shadow-sm ring-2 ring-white">
-                    {user.name?.charAt(0)?.toUpperCase() || 'U'}
-                  </div>
+                  <Link to={user.role === 'admin' ? '/admin' : '/traveler/profile'} className="relative flex-shrink-0">
+                    {user.profilePicture ? (
+                      <img src={`${import.meta.env.VITE_API_URL}/${user.profilePicture}`} alt=""
+                        className="w-8 h-8 rounded-full object-cover shadow-sm ring-2 ring-white hover:ring-blue-300 transition-all"
+                        onError={(e) => { e.currentTarget.style.display = 'none'; e.currentTarget.parentElement!.querySelector('.fallback')?.classList.remove('hidden'); }} />
+                    ) : null}
+                    <div className={`w-8 h-8 rounded-full bg-gradient-to-br from-blue-500 to-teal-500 flex items-center justify-center text-white text-sm font-bold shadow-sm ring-2 ring-white ${user.profilePicture ? 'hidden fallback' : ''}`}>
+                      {user.name?.charAt(0)?.toUpperCase() || 'U'}
+                    </div>
+                  </Link>
                 </div>
               ) : (
                 <>
@@ -428,15 +438,19 @@ export default function Navbar() {
               <div className="border-t border-slate-100 mt-6 pt-6">
                 {user ? (
                   <div className="space-y-3">
-                    <div className="flex items-center gap-3 px-4 py-2 mb-2">
-                      <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-teal-500 flex items-center justify-center text-white font-bold shadow-sm">
-                        {user.name?.charAt(0)?.toUpperCase() || 'U'}
+                    <Link to={user.role === 'admin' ? '/admin' : '/traveler/profile'} className="flex items-center gap-3 px-4 py-2 mb-2">
+                      <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-teal-500 flex items-center justify-center text-white font-bold shadow-sm flex-shrink-0 overflow-hidden">
+                        {user.profilePicture ? (
+                          <img src={`${import.meta.env.VITE_API_URL}/${user.profilePicture}`} alt="" className="w-full h-full object-cover" />
+                        ) : (
+                          user.name?.charAt(0)?.toUpperCase() || 'U'
+                        )}
                       </div>
                       <div>
                         <p className="font-bold text-slate-900 text-sm">{user.name}</p>
                         <p className="text-xs text-slate-500">{user.email}</p>
                       </div>
-                    </div>
+                    </Link>
                     <Link to={user.role === 'admin' ? '/admin' : '/traveler'} className="relative flex items-center gap-3 px-4 py-3 text-blue-600 font-bold bg-blue-50 rounded-xl hover:bg-blue-100 transition-colors">
                       {user.role === 'admin' ? 'Admin Panel' : 'Dashboard'}
                     </Link>

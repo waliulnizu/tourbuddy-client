@@ -19,6 +19,7 @@ function ApplyAsGuide() {
 
   const token = () => localStorage.getItem('token');
   const formHeaders = () => ({ Authorization: `Bearer ${token()}` });
+  const currentUser: any = JSON.parse(localStorage.getItem('user') || '{}');
 
   const fetchApplication = async () => {
     try {
@@ -253,7 +254,7 @@ function ApplyAsGuide() {
               {[
                 { label: 'Name', value: existingApp.name },
                 { label: 'Email', value: existingApp.email },
-                ...(existingApp.profile_image ? [{ label: 'Profile Image', isImage: true, value: existingApp.profile_image }] : []),
+                ...(existingApp.profile_image || currentUser?.profilePicture ? [{ label: 'Profile Image', isImage: true, value: currentUser?.profilePicture || existingApp.profile_image }] : []),
                 { label: 'Phone', value: existingApp.phone || '-' },
                 { label: 'Address', value: existingApp.address || '-' },
                 { label: 'Experience', value: existingApp.experience || '-' },
