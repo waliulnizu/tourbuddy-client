@@ -63,7 +63,7 @@ export default function Home() {
             slider_title: "Travel Together",
             slider_slugan: "Connect with fellow travelers worldwide",
             slider_image:
-              "https://images.unsplash.com/photo-1530789253388-582c481c54b0?auto=format&fit=crop&w=2000&q=80",
+              "https://images.unsplash.com/photo-1488646953014-85cb44e25828?auto=format&fit=crop&w=2000&q=80",
           },
         ];
 
@@ -108,7 +108,7 @@ export default function Home() {
     // Spacing is now controlled per-section for a consistent, intentional rhythm.
     <div className="bg-white flex flex-col overflow-hidden">
       {/* 1. Hero Section - With slider */}
-      <section className="relative h-[70vh] min-h-[550px] overflow-hidden">
+      <section className="relative h-[85vh] min-h-[650px] overflow-hidden">
         {sliders.map((slider, index) => (
           <div
             key={slider._id}
@@ -274,10 +274,8 @@ export default function Home() {
         <div className="absolute bottom-0 left-0 right-0 h-32 bg-gradient-to-t from-white to-transparent"></div>
       </section>
 
-      {/* 2. Stats Section - Overlapping style handled with proper margins */}
-      {/* FIX: added mb-16 md:mb-20 so there is a deliberate, single gap before
-          the next section, instead of relying on the removed global gap. */}
-      <section className="relative z-10 w-full pt-12 md:pt-12 pb-12 md:pb-20 bg-white">
+      {/* 2. Stats Section - Overlapping on hero bottom */}
+      <section className="relative z-10 w-full -mt-16 md:-mt-20 pt-8 pb-12 md:pb-20 bg-white">
         <Container size="5xl">
         <div className="grid grid-cols-2 md:grid-cols-4 gap-6 items-center">
           {[
